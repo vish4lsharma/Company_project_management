@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Employee - Company Management</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar">
+            <div class="nav-header">
+                <h3>Admin Panel</h3>
+                <p id="adminName"></p>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="dashboard-admin.html">← Back to Dashboard</a></li>
+                <li><a href="#" class="active">Add Employee</a></li>
+            </ul>
+        </nav>
+        
+        <main class="main-content">
+            <div class="page-header">
+                <h2>Add New Employee</h2>
+                <p>Create a new employee account in the system</p>
+            </div>
+            
+            <div class="form-container">
+                <form id="addEmployeeForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="employeeId">Employee ID:</label>
+                            <div class="input-group">
+                                <input type="text" id="employeeId" name="employee_id" readonly>
+                                <button type="button" id="generateIdBtn" class="btn btn-secondary">Generate ID</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="employeeName">Full Name:</label>
+                            <input type="text" id="employeeName" name="name" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="employeeEmail">Email:</label>
+                            <input type="email" id="employeeEmail" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="employeePhone">Phone:</label>
+                            <input type="tel" id="employeePhone" name="phone" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="employeePassword">Password:</label>
+                            <input type="password" id="employeePassword" name="password" required minlength="6">
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmPassword">Confirm Password:</label>
+                            <input type="password" id="confirmPassword" name="confirm_password" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="employeePosition">Position:</label>
+                            <select id="employeePosition" name="position" required>
+                                <option value="">Select Position</option>
+                                <option value="Software Developer">Software Developer</option>
+                                <option value="Senior Developer">Senior Developer</option>
+                                <option value="Project Manager">Project Manager</option>
+                                <option value="Business Analyst">Business Analyst</option>
+                                <option value="QA Engineer">QA Engineer</option>
+                                <option value="UI/UX Designer">UI/UX Designer</option>
+                                <option value="DevOps Engineer">DevOps Engineer</option>
+                                <option value="Team Lead">Team Lead</option>
+                                <option value="HR Manager">HR Manager</option>
+                                <option value="Marketing Specialist">Marketing Specialist</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="employeeDepartment">Department:</label>
+                            <select id="employeeDepartment" name="department" required>
+                                <option value="">Select Department</option>
+                                <option value="IT">Information Technology</option>
+                                <option value="HR">Human Resources</option>
+                                <option value="Finance">Finance</option>
+                                <option value="Marketing">Marketing</option>
+                                <option value="Sales">Sales</option>
+                                <option value="Operations">Operations</option>
+                                <option value="Quality Assurance">Quality Assurance</option>
+                                <option value="Research & Development">Research & Development</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="joiningDate">Joining Date:</label>
+                            <input type="date" id="joiningDate" name="joining_date" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-success">Create Employee</button>
+                        <button type="button" onclick="resetForm()" class="btn btn-secondary">Reset Form</button>
+                        <a href="dashboard-admin.html" class="btn btn-outline">Cancel</a>
+                    </div>
+                    
+                    <div id="errorMessage" class="error-message"></div>
+                    <div id="successMessage" class="success-message"></div>
+                </form>
+            </div>
+        </main>
+    </div>
+    <script src="js/auth-manager.js"></script>
+<script src="js/your-page-specific.js"></script>
+
+    <script src="js/add-employee.js"></script>
+</body>
+</html>

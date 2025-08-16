@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Company Management</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar">
+            <div class="nav-header">
+                <h3>Admin Panel</h3>
+                <p id="adminName"></p>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#" onclick="showSection('dashboard')" class="active">Dashboard</a></li>
+                <li><a href="#" onclick="showSection('employees')">Employees</a></li>
+                <li><a href="#" onclick="showSection('projects')">Projects</a></li>
+                <li><a href="#" onclick="showSection('tasks')">Assign Tasks</a></li>
+                <li><a href="#" onclick="showSection('reports')">Daily Reports</a></li>
+                <li><a href="#" onclick="showSection('attendance')">Attendance</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </nav>
+        
+        <main class="main-content">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="content-section active">
+                <h2>Dashboard Overview</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Employees</h3>
+                        <p id="totalEmployees">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Active Projects</h3>
+                        <p id="activeProjects">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Pending Tasks</h3>
+                        <p id="pendingTasks">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Today's Reports</h3>
+                        <p id="todayReports">0</p>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Employees Section -->
+            <section id="employees" class="content-section">
+                <h2>Employee Management</h2>
+                <div class="section-actions">
+                    <a href="add-employee.html" class="btn btn-success">+ Add New Employee</a>
+                    <button onclick="loadEmployees()" class="btn btn-primary">Refresh List</button>
+                </div>
+                <div id="employeesList"></div>
+            </section>
+            
+            <!-- Projects Section -->
+            <section id="projects" class="content-section">
+                <h2>Project Management</h2>
+                <button onclick="showCreateProjectForm()" class="btn btn-primary">Create New Project</button>
+                
+                <div id="createProjectForm" class="form-container" style="display: none;">
+                    <h3>Create New Project</h3>
+                    <form id="projectForm">
+                        <div class="form-row">
+                            <input type="text" id="projectName" placeholder="Project Name" required>
+                            <select id="projectPriority">
+                                <option value="low">Low Priority</option>
+                                <option value="medium" selected>Medium Priority</option>
+                                <option value="high">High Priority</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <input type="date" id="startDate" required>
+                            <input type="date" id="endDate" required>
+                        </div>
+                        <textarea id="projectDescription" placeholder="Project Description" rows="3"></textarea>
+                        <button type="submit" class="btn btn-success">Create Project</button>
+                        <button type="button" onclick="hideCreateProjectForm()" class="btn btn-secondary">Cancel</button>
+                    </form>
+                </div>
+                
+                <div id="projectsList"></div>
+            </section>
+            
+            <!-- Tasks Section -->
+            <section id="tasks" class="content-section">
+                <h2>Task Assignment</h2>
+                <button onclick="showAssignTaskForm()" class="btn btn-primary">Assign New Task</button>
+                
+                <div id="assignTaskForm" class="form-container" style="display: none;">
+                    <h3>Assign Task</h3>
+                    <form id="taskForm">
+                        <div class="form-row">
+                            <select id="taskProject" required>
+                                <option value="">Select Project</option>
+                            </select>
+                            <select id="taskEmployee" required>
+                                <option value="">Select Employee</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <input type="text" id="taskName" placeholder="Task Name" required>
+                            <input type="date" id="taskDueDate" required>
+                        </div>
+                        <div class="form-row">
+                            <select id="taskPriority">
+                                <option value="low">Low Priority</option>
+                                <option value="medium" selected>Medium Priority</option>
+                                <option value="high">High Priority</option>
+                            </select>
+                        </div>
+                        <textarea id="taskDescription" placeholder="Task Description" rows="3"></textarea>
+                        <button type="submit" class="btn btn-success">Assign Task</button>
+                        <button type="button" onclick="hideAssignTaskForm()" class="btn btn-secondary">Cancel</button>
+                    </form>
+                </div>
+            </section>
+            
+            <!-- Reports Section -->
+            <section id="reports" class="content-section">
+                <h2>Daily Reports</h2>
+                <div id="reportsList"></div>
+            </section>
+            
+            <!-- Attendance Section -->
+            <section id="attendance" class="content-section">
+                <h2>Attendance Report</h2>
+                <div id="attendanceList"></div>
+            </section>
+        </main>
+    </div>
+    <script src="js/auth-manager.js"></script>
+<script src="js/your-page-specific.js"></script>
+
+    <script src="js/admin.js"></script>
+</body>
+</html>

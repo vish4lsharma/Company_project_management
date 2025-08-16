@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Dashboard - Company Management</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar">
+            <div class="nav-header">
+                <h3>Employee Panel</h3>
+                <p id="employeeName"></p>
+                <p id="employeeId"></p>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#" onclick="showSection('dashboard')" class="active">Dashboard</a></li>
+                <li><a href="#" onclick="showSection('projects')">My Projects</a></li>
+                <li><a href="#" onclick="showSection('tasks')">My Tasks</a></li>
+                <li><a href="#" onclick="showSection('reports')">Daily Report</a></li>
+                <li><a href="#" onclick="showSection('attendance')">My Attendance</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </nav>
+        
+        <main class="main-content">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="content-section active">
+                <h2>Welcome to Your Dashboard</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>My Projects</h3>
+                        <p id="myProjectsCount">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Pending Tasks</h3>
+                        <p id="myPendingTasks">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Completed Tasks</h3>
+                        <p id="myCompletedTasks">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>This Month Attendance</h3>
+                        <p id="monthlyAttendance">0</p>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Projects Section -->
+            <section id="projects" class="content-section">
+                <h2>My Projects</h2>
+                <div id="projectsList"></div>
+            </section>
+            
+            <!-- Tasks Section -->
+            <section id="tasks" class="content-section">
+                <h2>My Tasks</h2>
+                <div id="tasksList"></div>
+            </section>
+            
+            <!-- Reports Section -->
+            <section id="reports" class="content-section">
+                <h2>Submit Daily Report</h2>
+                <form id="dailyReportForm" class="form-container">
+                    <div class="form-group">
+                        <label for="reportDate">Report Date:</label>
+                        <input type="date" id="reportDate" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tasksCompleted">Tasks Completed Today:</label>
+                        <textarea id="tasksCompleted" rows="4" placeholder="Describe the tasks you completed today..." required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="challengesFaced">Challenges Faced:</label>
+                        <textarea id="challengesFaced" rows="3" placeholder="Any challenges or issues you encountered..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tomorrowPlan">Tomorrow's Plan:</label>
+                        <textarea id="tomorrowPlan" rows="3" placeholder="What do you plan to work on tomorrow..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="workingHours">Working Hours:</label>
+                        <input type="number" id="workingHours" step="0.1" min="0" max="24" value="8.0">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success">Submit Report</button>
+                </form>
+            </section>
+            
+            <!-- Attendance Section -->
+            <section id="attendance" class="content-section">
+                <h2>My Attendance Record</h2>
+                <div id="attendanceList"></div>
+            </section>
+        </main>
+    </div>
+    <script src="js/auth-manager.js"></script>
+<script src="js/your-page-specific.js"></script>
+
+    <script src="js/employee.js"></script>
+</body>
+</html>
