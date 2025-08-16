@@ -38,6 +38,21 @@ class AdminModel {
         });
     }
 
+    static getAllTasks(callback) {
+        const query = `
+            SELECT t.*, p.project_name, e.name as employee_name, e.employee_id
+            FROM tasks t 
+            LEFT JOIN projects p ON t.project_id = p.id 
+            LEFT JOIN employees e ON t.assigned_to = e.id 
+            ORDER BY t.created_at DESC
+        `;
+        db.query(query, (err, results) => {
+            if (err) return callback(err);
+            const rows = results.rows || results;
+            callback(null, rows);
+        });
+    }
+
     static createProject(projectData, callback) {
         const query = `
             INSERT INTO projects (project_name, description, start_date, 
@@ -143,21 +158,6 @@ class AdminModel {
     static checkEmployeeExists(email, employee_id, callback) {
         const query = 'SELECT id FROM employees WHERE email = $1 OR employee_id = $2';
         db.query(query, [email, employee_id], (err, results) => {
-            if (err) return callback(err);
-            const rows = results.rows || results;
-            callback(null, rows);
-        });
-    }
-
-    static getAllTasks(callback) {
-        const query = `
-            SELECT t.*, p.project_name, e.name as employee_name, e.employee_id
-            FROM tasks t 
-            LEFT JOIN projects p ON t.project_id = p.id 
-            LEFT JOIN employees e ON t.assigned_to = e.id 
-            ORDER BY t.created_at DESC
-        `;
-        db.query(query, (err, results) => {
             if (err) return callback(err);
             const rows = results.rows || results;
             callback(null, rows);
