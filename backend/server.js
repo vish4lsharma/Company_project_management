@@ -16,14 +16,30 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use('/api/admin', adminRoutes);
 app.use('/api/employee', employeeRoutes);
 
-// Serve static files
-app.use(express.static('../frontend'));
+// Health check endpoint for Railway
+app.get('/health', (req, res) => {
+    res.status(200).json({ 
+        status: 'OK', 
+        timestamp: new Date().toISOString(),
+        port: PORT
+    });
+});
+
+// Serve static files - Fixed path
+app.use(express.static(path.join(__dirname, '../frontend')));
 
 // Root route
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+// Handle all other routes (SPA routing)
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/index.html'));
+});
+
+// FIXED: Bind to 0.0.0.0 for Railway
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`✅ Server running on http://0.0.0.0:${PORT}`);
+    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
