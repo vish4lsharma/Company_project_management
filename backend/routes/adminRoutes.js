@@ -15,14 +15,12 @@ router.get('/employees/generate-id', authenticateToken, AdminController.generate
 router.get('/projects', authenticateToken, AdminController.getAllProjects);
 router.post('/projects', authenticateToken, AdminController.createProject);
 
-// ADD THIS NEW ROUTE FOR TASKS
 router.get('/tasks', authenticateToken, AdminController.getAllTasks);
 router.post('/tasks', authenticateToken, AdminController.assignTask);
 
 router.get('/reports', authenticateToken, AdminController.getDailyReports);
 router.get('/attendance', authenticateToken, AdminController.getAttendanceReport);
 
-// Token refresh endpoint
 router.post('/refresh-token', authenticateToken, AdminController.refreshToken);
 
 module.exports = router;
