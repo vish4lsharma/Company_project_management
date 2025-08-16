@@ -1,54 +1,55 @@
 require('dotenv').config();
 
-console.log('🔍 Environment Variables Debug:');
-console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
-console.log('DATABASE_URL preview:', process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 50) + '...' : 'MISSING');
-console.log('NODE_ENV:', process.env.NODE_ENV);
+// Try PostgreSQL first (for Render), then fallback to MySQL (for local)
+let db;
 
 if (process.env.DATABASE_URL) {
-    // PostgreSQL for Render production
+    // PostgreSQL for Render
     const { Pool } = require('pg');
     
-    console.log('📡 Using DATABASE_URL for PostgreSQL connection');
-    
-    const pool = new Pool({
+    db = new Pool({
         connectionString: process.env.DATABASE_URL,
         ssl: {
             rejectUnauthorized: false
         }
     });
     
-    pool.connect((err, client, release) => {
-        if (err) {
-            console.error('❌ PostgreSQL connection failed:', err.message);
-            console.error('Connection string used:', process.env.DATABASE_URL);
-            return;
-        }
-        console.log('✅ Connected to PostgreSQL database');
-        release();
-    });
+    console.log('🔄 Attempting PostgreSQL connection...');
     
-    module.exports = pool;
 } else {
-    // Fallback to MySQL for local development
-    console.log('🔄 Using MySQL fallback for local development');
+    // MySQL for local development
     const mysql = require('mysql2');
     
-    const connection = mysql.createConnection({
+    db = mysql.createConnection({
         host: 'localhost',
-        user: 'root',
+        user: 'root', 
         password: 'Root@123',
-        database: 'company_management',
-        port: 3306
+        database: 'company_management'
     });
     
-    connection.connect((err) => {
-        if (err) {
-            console.error('❌ MySQL connection failed:', err.message);
-            return;
-        }
-        console.log('✅ Connected to MySQL database');
-    });
-    
-    module.exports = connection;
+    console.log('🔄 Attempting MySQL connection...');
 }
+
+// Test connection
+if (process.env.DATABASE_URL) {
+    // Test PostgreSQL
+    db.connect((err, client, release) => {
+        if (err) {
+            console.error('❌ PostgreSQL failed:', err.message);
+        } else {
+            console.log('✅ PostgreSQL connected successfully');
+            if (release) release();
+        }
+    });
+} else {
+    // Test MySQL
+    db.connect((err) => {
+        if (err) {
+            console.error('❌ MySQL failed:', err.message);
+        } else {
+            console.log('✅ MySQL connected successfully');
+        }
+    });
+}
+
+module.exports = db;
