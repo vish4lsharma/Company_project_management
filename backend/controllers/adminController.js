@@ -4,60 +4,67 @@ const { JWT_SECRET } = require('../config/jwt');
 const AdminModel = require('../models/adminModel');
 
 class AdminController {
-    static async login(req, res) {
-        console.log('🚀 Admin login attempt for:', req.body.email);
-        
-        const { email, password } = req.body;
+   static async login(req, res) {
+    console.log('🚀 Admin login attempt for:', req.body.email);
+    
+    const { email, password } = req.body;
 
-        AdminModel.findByEmail(email, async (err, results) => {
-            if (err) {
-                console.log('❌ Database error:', err);
-                return res.status(500).json({ error: 'Database error' });
-            }
+    AdminModel.findByEmail(email, async (err, results) => {
+        if (err) {
+            console.log('❌ Database error:', err);
+            return res.status(500).json({ error: 'Database error' });
+        }
+        
+        console.log('📊 Query results:', results); // DEBUG: Check what we got from DB
+        
+        if (results.length === 0) {
+            console.log('❌ Admin not found:', email);
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        const admin = results[0];
+        
+        console.log('🔍 Found admin:', admin.email); // DEBUG: Confirm user found
+        console.log('🔑 Stored hash:', admin.password); // DEBUG: Check stored hash
+        console.log('📝 Plain password:', password); // DEBUG: Check received password
+        
+        try {
+            const isValidPassword = await bcrypt.compare(password, admin.password);
+            console.log('✅ Password comparison result:', isValidPassword); // DEBUG: Check comparison
             
-            if (results.length === 0) {
-                console.log('❌ Admin not found:', email);
+            if (!isValidPassword) {
+                console.log('❌ Invalid password for:', email);
                 return res.status(401).json({ error: 'Invalid credentials' });
             }
 
-            const admin = results[0];
-            
-            try {
-                const isValidPassword = await bcrypt.compare(password, admin.password);
+            // Generate token (rest of your code)
+            const tokenPayload = {
+                id: admin.id,
+                email: admin.email,
+                role: 'admin',
+                iat: Math.floor(Date.now() / 1000),
+                exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
+            };
 
-                if (!isValidPassword) {
-                    console.log('❌ Invalid password for:', email);
-                    return res.status(401).json({ error: 'Invalid credentials' });
-                }
+            const token = jwt.sign(tokenPayload, JWT_SECRET);
 
-                const tokenPayload = {
+            res.json({
+                message: 'Login successful',
+                token,
+                expiresIn: 24 * 60 * 60,
+                admin: {
                     id: admin.id,
-                    email: admin.email,
-                    role: 'admin',
-                    iat: Math.floor(Date.now() / 1000),
-                    exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours
-                };
+                    name: admin.name,
+                    email: admin.email
+                }
+            });
+        } catch (error) {
+            console.log('❌ Login error:', error);
+            res.status(500).json({ error: 'Login failed' });
+        }
+    });
+}
 
-                const token = jwt.sign(tokenPayload, JWT_SECRET);
-
-                console.log('✅ Token generated successfully for:', admin.email);
-
-                res.json({
-                    message: 'Login successful',
-                    token,
-                    expiresIn: 24 * 60 * 60, // seconds
-                    admin: {
-                        id: admin.id,
-                        name: admin.name,
-                        email: admin.email
-                    }
-                });
-            } catch (error) {
-                console.log('❌ Login error:', error);
-                res.status(500).json({ error: 'Login failed' });
-            }
-        });
-    }
 
     static getAllTasks(req, res) {
         console.log('📝 Getting all tasks for user:', req.user.email);
