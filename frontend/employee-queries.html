@@ -113,16 +113,17 @@
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <h2>Employee Queries</h2>
-            <div class="nav-links">
-                <a href="employee-dashboard.html">Dashboard</a>
-                <a href="employee-queries.html" class="active">Queries</a>
-                <a href="#" onclick="logout()">Logout</a>
-            </div>
+    <nav style="background-color: #333; color: white; padding: 1rem 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="margin: 0; font-size: 1.5rem; color: white;">Employee Queries</h2>
+        <div style="display: flex; gap: 20px;">
+            <a href="employee-dashboard.html" style="color: white; text-decoration: none; padding: 8px 16px; border-radius: 4px; transition: background-color 0.3s; background-color: transparent;">Back</a>
+            <a href="employee-queries.html" style="color: white; text-decoration: none; padding: 8px 16px; border-radius: 4px; transition: background-color 0.3s; background-color: #555; font-weight: bold;">Queries</a>
+            <!-- <a href="#" onclick="logout()" style="color: white; text-decoration: none; padding: 8px 16px; border-radius: 4px; transition: background-color 0.3s; background-color: transparent;">Logout</a> -->
         </div>
-    </nav>
+    </div>
+</nav>
+
 
     <div class="queries-container">
         <div class="query-tabs">
