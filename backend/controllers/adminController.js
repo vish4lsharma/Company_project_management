@@ -1,266 +1,210 @@
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = require('../config/jwt');
-const AdminModel = require('../models/adminModel');
+const db = require('../config/db');
 
-class AdminController {
-    static async login(req, res) {
-        console.log('🚀 Admin login attempt for:', req.body.email);
-        
-        const { email, password } = req.body;
-
-        AdminModel.findByEmail(email, async (err, results) => {
-            if (err) {
-                console.log('❌ Database error:', err);
-                return res.status(500).json({ error: 'Database error' });
-            }
-            
-            if (results.length === 0) {
-                console.log('❌ Admin not found:', email);
-                return res.status(401).json({ error: 'Invalid credentials' });
-            }
-
-            const admin = results[0];
-            
-            try {
-                const isValidPassword = await bcrypt.compare(password, admin.password);
-
-                if (!isValidPassword) {
-                    console.log('❌ Invalid password for:', email);
-                    return res.status(401).json({ error: 'Invalid credentials' });
-                }
-
-                // Generate token with automatic expiration
-                const tokenPayload = {
-                    id: admin.id,
-                    email: admin.email,
-                    role: 'admin',
-                    iat: Math.floor(Date.now() / 1000),
-                    exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours
-                };
-
-                const token = jwt.sign(tokenPayload, JWT_SECRET);
-
-                console.log('✅ Token generated successfully for:', admin.email);
-
-                res.json({
-                    message: 'Login successful',
-                    token,
-                    expiresIn: 24 * 60 * 60, // seconds
-                    admin: {
-                        id: admin.id,
-                        name: admin.name,
-                        email: admin.email
-                    }
-                });
-            } catch (error) {
-                console.log('❌ Login error:', error);
-                res.status(500).json({ error: 'Login failed' });
-            }
-        });
-    }
-    // Add this method to your AdminController class
-static getAllTasks(req, res) {
-    console.log('📝 Getting all tasks for user:', req.user.email);
-    
-    AdminModel.getAllTasks((err, results) => {
-        if (err) {
-            console.log('❌ Database error:', err);
-            return res.status(500).json({ error: 'Database error' });
-        }
-        console.log('✅ Retrieved', results.length, 'tasks');
-        res.json(results);
-    });
-}
-
-    static getAllEmployees(req, res) {
-        console.log('📋 Getting all employees for user:', req.user.email);
-        
-        AdminModel.getAllEmployees((err, results) => {
-            if (err) {
-                console.log('❌ Database error:', err);
-                return res.status(500).json({ error: 'Database error' });
-            }
-            console.log('✅ Retrieved', results.length, 'employees');
-            res.json(results);
+class AdminModel {
+    static findByEmail(email, callback) {
+        const query = 'SELECT * FROM admins WHERE email = $1';
+        db.query(query, [email], (err, results) => {
+            if (err) return callback(err);
+            const rows = results.rows || results;
+            callback(null, rows);
         });
     }
 
-    static getAllProjects(req, res) {
-        console.log('📋 Getting all projects for user:', req.user.email);
-        
-        AdminModel.getAllProjects((err, results) => {
-            if (err) {
-                console.log('❌ Database error:', err);
-                return res.status(500).json({ error: 'Database error' });
-            }
-            console.log('✅ Retrieved', results.length, 'projects');
-            res.json(results);
+    static getAllEmployees(callback) {
+        const query = `
+            SELECT id, employee_id, name, email, phone, position, 
+                   department, joining_date, status 
+            FROM employees 
+            ORDER BY created_at DESC
+        `;
+        db.query(query, (err, results) => {
+            if (err) return callback(err);
+            const rows = results.rows || results;
+            callback(null, rows);
         });
     }
 
-    static createProject(req, res) {
-        console.log('🆕 Creating project for user:', req.user.email);
-        
-        const projectData = {
-            ...req.body,
-            created_by: req.user.id
-        };
-
-        AdminModel.createProject(projectData, (err, results) => {
-            if (err) {
-                console.log('❌ Project creation error:', err);
-                return res.status(500).json({ error: 'Failed to create project' });
-            }
-            console.log('✅ Project created with ID:', results.insertId);
-            res.json({ 
-                message: 'Project created successfully', 
-                projectId: results.insertId 
-            });
+    static getAllProjects(callback) {
+        const query = `
+            SELECT p.*, a.name as created_by_name 
+            FROM projects p 
+            LEFT JOIN admins a ON p.created_by = a.id 
+            ORDER BY p.created_at DESC
+        `;
+        db.query(query, (err, results) => {
+            if (err) return callback(err);
+            const rows = results.rows || results;
+            callback(null, rows);
         });
     }
 
-    static assignTask(req, res) {
-        console.log('📝 Assigning task for user:', req.user.email);
-        
-        AdminModel.assignTask(req.body, (err, results) => {
-            if (err) {
-                console.log('❌ Task assignment error:', err);
-                return res.status(500).json({ error: 'Failed to assign task' });
-            }
-            console.log('✅ Task assigned with ID:', results.insertId);
-            res.json({ 
-                message: 'Task assigned successfully', 
-                taskId: results.insertId 
-            });
+    static createProject(projectData, callback) {
+        const query = `
+            INSERT INTO projects (project_name, description, start_date, 
+                                  end_date, status, priority, created_by) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING id
+        `;
+        db.query(query, [
+            projectData.project_name,
+            projectData.description,
+            projectData.start_date,
+            projectData.end_date,
+            projectData.status || 'planning',
+            projectData.priority || 'medium',
+            projectData.created_by
+        ], (err, results) => {
+            if (err) return callback(err);
+            const insertResult = {
+                insertId: results.rows ? results.rows[0].id : results.insertId
+            };
+            callback(null, insertResult);
         });
     }
 
-    static getDailyReports(req, res) {
-        console.log('📊 Getting daily reports for user:', req.user.email);
-        
-        AdminModel.getDailyReports((err, results) => {
-            if (err) {
-                console.log('❌ Database error:', err);
-                return res.status(500).json({ error: 'Database error' });
-            }
-            console.log('✅ Retrieved', results.length, 'reports');
-            res.json(results);
+    static assignTask(taskData, callback) {
+        const query = `
+            INSERT INTO tasks (project_id, assigned_to, task_name, 
+                               description, due_date, status, priority) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING id
+        `;
+        db.query(query, [
+            taskData.project_id,
+            taskData.assigned_to,
+            taskData.task_name,
+            taskData.description,
+            taskData.due_date,
+            taskData.status || 'pending',
+            taskData.priority || 'medium'
+        ], (err, results) => {
+            if (err) return callback(err);
+            const insertResult = {
+                insertId: results.rows ? results.rows[0].id : results.insertId
+            };
+            callback(null, insertResult);
         });
     }
 
-    static getAttendanceReport(req, res) {
-        console.log('👥 Getting attendance report for user:', req.user.email);
-        
-        AdminModel.getAttendanceReport((err, results) => {
-            if (err) {
-                console.log('❌ Database error:', err);
-                return res.status(500).json({ error: 'Database error' });
-            }
-            console.log('✅ Retrieved', results.length, 'attendance records');
-            res.json(results);
+    static getDailyReports(callback) {
+        const query = `
+            SELECT dr.*, e.name as employee_name, e.employee_id 
+            FROM daily_reports dr 
+            LEFT JOIN employees e ON dr.employee_id = e.id 
+            ORDER BY dr.report_date DESC, dr.created_at DESC
+        `;
+        db.query(query, (err, results) => {
+            if (err) return callback(err);
+            const rows = results.rows || results;
+            callback(null, rows);
         });
     }
 
-    static async createEmployee(req, res) {
-        console.log('👤 Creating new employee for user:', req.user.email);
-        
-        const {
-            name, email, password, phone, position, 
-            department, joining_date, employee_id
-        } = req.body;
+    static getAttendanceReport(callback) {
+        const query = `
+            SELECT a.*, e.name as employee_name, e.employee_id 
+            FROM attendance a 
+            LEFT JOIN employees e ON a.employee_id = e.id 
+            ORDER BY a.attendance_date DESC
+        `;
+        db.query(query, (err, results) => {
+            if (err) return callback(err);
+            const rows = results.rows || results;
+            callback(null, rows);
+        });
+    }
 
-        try {
-            if (!name || !email || !password || !employee_id) {
-                return res.status(400).json({ error: 'Missing required fields' });
+    static createEmployee(employeeData, callback) {
+        const query = `
+            INSERT INTO employees (employee_id, name, email, password, phone, 
+                                   position, department, joining_date, status) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            RETURNING id
+        `;
+        db.query(query, [
+            employeeData.employee_id,
+            employeeData.name,
+            employeeData.email,
+            employeeData.password,
+            employeeData.phone,
+            employeeData.position,
+            employeeData.department,
+            employeeData.joining_date,
+            employeeData.status || 'active'
+        ], (err, results) => {
+            if (err) return callback(err);
+            const insertResult = {
+                insertId: results.rows ? results.rows[0].id : results.insertId
+            };
+            callback(null, insertResult);
+        });
+    }
+
+    static checkEmployeeExists(email, employee_id, callback) {
+        const query = 'SELECT id FROM employees WHERE email = $1 OR employee_id = $2';
+        db.query(query, [email, employee_id], (err, results) => {
+            if (err) return callback(err);
+            const rows = results.rows || results;
+            callback(null, rows);
+        });
+    }
+
+    static getAllTasks(callback) {
+        const query = `
+            SELECT t.*, p.project_name, e.name as employee_name, e.employee_id
+            FROM tasks t 
+            LEFT JOIN projects p ON t.project_id = p.id 
+            LEFT JOIN employees e ON t.assigned_to = e.id 
+            ORDER BY t.created_at DESC
+        `;
+        db.query(query, (err, results) => {
+            if (err) return callback(err);
+            const rows = results.rows || results;
+            callback(null, rows);
+        });
+    }
+
+    static generateEmployeeId(callback) {
+        console.log('🆔 Generating employee ID in model...');
+        
+        const query = `
+            SELECT employee_id 
+            FROM employees 
+            WHERE employee_id LIKE 'EMP%' 
+            ORDER BY CAST(SUBSTRING(employee_id, 4) AS INTEGER) DESC 
+            LIMIT 1
+        `;
+        
+        db.query(query, (err, results) => {
+            if (err) {
+                console.error('❌ Database query error:', err);
+                callback(err);
+                return;
             }
 
-            AdminModel.checkEmployeeExists(email, employee_id, async (err, results) => {
-                if (err) {
-                    console.error('❌ Check employee exists error:', err);
-                    return res.status(500).json({ error: 'Database error' });
-                }
+            const rows = results.rows || results;
+            console.log('📊 Database results:', rows);
+
+            let nextId = 'EMP001';
+            if (rows && rows.length > 0) {
+                const lastId = rows[0].employee_id;
+                console.log('🔍 Last employee ID found:', lastId);
                 
-                if (results.length > 0) {
-                    console.log('❌ Employee already exists:', email);
-                    return res.status(400).json({ 
-                        error: 'Employee with this email or ID already exists' 
-                    });
+                // Extract numeric part from employee_id (e.g., 'EMP001' -> 1)
+                const numericPart = parseInt(lastId.substring(3), 10);
+                
+                if (!isNaN(numericPart)) {
+                    const nextNumber = numericPart + 1;
+                    nextId = 'EMP' + nextNumber.toString().padStart(3, '0');
+                    console.log('🔢 Next ID calculated:', nextId);
                 }
-
-                try {
-                    const hashedPassword = await bcrypt.hash(password, 12); // Increased salt rounds
-
-                    const employeeData = {
-                        employee_id,
-                        name,
-                        email,
-                        password: hashedPassword,
-                        phone: phone || '',
-                        position: position || '',
-                        department: department || '',
-                        joining_date: joining_date || new Date().toISOString().split('T')[0],
-                        status: 'active'
-                    };
-
-                    AdminModel.createEmployee(employeeData, (createErr, createResults) => {
-                        if (createErr) {
-                            console.error('❌ Create employee error:', createErr);
-                            return res.status(500).json({ error: 'Failed to create employee' });
-                        }
-                        
-                        console.log('✅ Employee created successfully with ID:', createResults.insertId);
-                        res.json({ 
-                            message: 'Employee created successfully', 
-                            employeeId: createResults.insertId,
-                            employee_id: employee_id
-                        });
-                    });
-                } catch (hashError) {
-                    console.error('❌ Password hashing error:', hashError);
-                    return res.status(500).json({ error: 'Server error' });
-                }
-            });
-        } catch (error) {
-            console.error('❌ Create employee error:', error);
-            res.status(500).json({ error: 'Server error' });
-        }
-    }
-
-    static generateEmployeeId(req, res) {
-        console.log('🆔 Generating employee ID for user:', req.user.email);
-        
-        AdminModel.generateEmployeeId((err, results) => {
-            if (err) {
-                console.error('❌ Generate employee ID error:', err);
-                return res.status(500).json({ error: 'Failed to generate employee ID' });
+            } else {
+                console.log('ℹ️ No existing employees, using default ID:', nextId);
             }
-            
-            console.log('✅ Generated employee ID:', results.employee_id);
-            res.json(results);
-        });
-    }
 
-    // Auto-refresh token endpoint
-    static refreshToken(req, res) {
-        console.log('🔄 Refreshing token for user:', req.user.email);
-        
-        const newTokenPayload = {
-            id: req.user.id,
-            email: req.user.email,
-            role: req.user.role,
-            iat: Math.floor(Date.now() / 1000),
-            exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours
-        };
-
-        const newToken = jwt.sign(newTokenPayload, JWT_SECRET);
-
-        res.json({
-            message: 'Token refreshed successfully',
-            token: newToken,
-            expiresIn: 24 * 60 * 60
+            callback(null, { employee_id: nextId });
         });
     }
 }
 
-module.exports = AdminController;
+module.exports = AdminModel;
