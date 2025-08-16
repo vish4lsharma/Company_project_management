@@ -31,8 +31,8 @@ app.get('/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// Catch-all handler for SPA routing
-app.get('*', (req, res) => {
+// Catch-all handler for SPA routing (Express 5.0 compatible)
+app.get(/(.*)/, (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
