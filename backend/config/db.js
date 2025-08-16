@@ -1,55 +1,43 @@
 require('dotenv').config();
 
-// Try PostgreSQL first (for Render), then fallback to MySQL (for local)
-let db;
-
 if (process.env.DATABASE_URL) {
-    // PostgreSQL for Render
+    // PostgreSQL for Render production
     const { Pool } = require('pg');
     
-    db = new Pool({
+    const pool = new Pool({
         connectionString: process.env.DATABASE_URL,
-        ssl: {
-            rejectUnauthorized: false
+        ssl: { rejectUnauthorized: false }
+    });
+    
+    pool.connect((err, client, release) => {
+        if (err) {
+            console.error('❌ PostgreSQL connection failed:', err.message);
+        } else {
+            console.log('✅ Connected to PostgreSQL database');
+            if (release) release();
         }
     });
     
-    console.log('🔄 Attempting PostgreSQL connection...');
-    
+    module.exports = pool;
 } else {
     // MySQL for local development
     const mysql = require('mysql2');
     
-    db = mysql.createConnection({
+    const connection = mysql.createConnection({
         host: 'localhost',
-        user: 'root', 
+        user: 'root',
         password: 'Root@123',
-        database: 'company_management'
+        database: 'company_management',
+        port: 3306
     });
     
-    console.log('🔄 Attempting MySQL connection...');
-}
-
-// Test connection
-if (process.env.DATABASE_URL) {
-    // Test PostgreSQL
-    db.connect((err, client, release) => {
+    connection.connect((err) => {
         if (err) {
-            console.error('❌ PostgreSQL failed:', err.message);
+            console.error('❌ MySQL connection failed:', err.message);
         } else {
-            console.log('✅ PostgreSQL connected successfully');
-            if (release) release();
+            console.log('✅ Connected to MySQL database');
         }
     });
-} else {
-    // Test MySQL
-    db.connect((err) => {
-        if (err) {
-            console.error('❌ MySQL failed:', err.message);
-        } else {
-            console.log('✅ MySQL connected successfully');
-        }
-    });
+    
+    module.exports = connection;
 }
-
-module.exports = db;
