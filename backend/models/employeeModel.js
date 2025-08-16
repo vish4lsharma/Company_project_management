@@ -9,6 +9,92 @@ class EmployeeModel {
             callback(null, rows);
         });
     }
+    // Add these methods to your existing EmployeeModel class
+
+static submitQuery(queryData, callback) {
+    const query = `
+        INSERT INTO employee_queries (from_employee_id, to_employee_id, subject, question, status) 
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id
+    `;
+    db.query(query, [
+        queryData.from_employee_id,
+        queryData.to_employee_id,
+        queryData.subject,
+        queryData.question,
+        'pending'
+    ], (err, results) => {
+        if (err) return callback(err);
+        const insertResult = {
+            insertId: results.rows ? results.rows[0].id : results.insertId
+        };
+        callback(null, insertResult);
+    });
+}
+
+static getMyQueries(employeeId, callback) {
+    const query = `
+        SELECT eq.*, 
+               e_from.name as from_employee_name, e_from.employee_id as from_employee_id,
+               e_to.name as to_employee_name, e_to.employee_id as to_employee_id
+        FROM employee_queries eq
+        LEFT JOIN employees e_from ON eq.from_employee_id = e_from.id
+        LEFT JOIN employees e_to ON eq.to_employee_id = e_to.id
+        WHERE eq.from_employee_id = $1
+        ORDER BY eq.created_at DESC
+    `;
+    db.query(query, [employeeId], (err, results) => {
+        if (err) return callback(err);
+        const rows = results.rows || results;
+        callback(null, rows);
+    });
+}
+
+static getQueriesForMe(employeeId, callback) {
+    const query = `
+        SELECT eq.*, 
+               e_from.name as from_employee_name, e_from.employee_id as from_employee_id,
+               e_to.name as to_employee_name, e_to.employee_id as to_employee_id
+        FROM employee_queries eq
+        LEFT JOIN employees e_from ON eq.from_employee_id = e_from.id
+        LEFT JOIN employees e_to ON eq.to_employee_id = e_to.id
+        WHERE eq.to_employee_id = $1
+        ORDER BY eq.created_at DESC
+    `;
+    db.query(query, [employeeId], (err, results) => {
+        if (err) return callback(err);
+        const rows = results.rows || results;
+        callback(null, rows);
+    });
+}
+
+static respondToQuery(queryId, response, callback) {
+    const query = `
+        UPDATE employee_queries 
+        SET response = $1, status = $2, responded_at = NOW()
+        WHERE id = $3
+        RETURNING id
+    `;
+    db.query(query, [response, 'answered', queryId], (err, results) => {
+        if (err) return callback(err);
+        const affectedRows = results.rows ? results.rows.length : results.affectedRows;
+        callback(null, { affectedRows });
+    });
+}
+
+static getAllEmployeesExceptMe(currentEmployeeId, callback) {
+    const query = `
+        SELECT id, name, employee_id, position, department
+        FROM employees 
+        WHERE id != $1 AND status = $2
+        ORDER BY name ASC
+    `;
+    db.query(query, [currentEmployeeId, 'active'], (err, results) => {
+        if (err) return callback(err);
+        const rows = results.rows || results;
+        callback(null, rows);
+    });
+}
 
     static markAttendance(employeeId, callback) {
         const today = new Date().toISOString().split('T')[0];

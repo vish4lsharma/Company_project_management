@@ -50,6 +50,71 @@ function showSection(sectionName) {
             break;
     }
 }
+// Add these functions to your employee dashboard JavaScript
+
+// Submit a new query
+async function submitQuery(toEmployeeId, subject, question) {
+    const response = await fetch('/api/employee/queries/submit', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+            to_employee_id: toEmployeeId,
+            subject: subject,
+            question: question
+        })
+    });
+    return response.json();
+}
+
+// Get queries I sent
+async function getMyQueries() {
+    const response = await fetch('/api/employee/queries/sent', {
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+    });
+    return response.json();
+}
+
+// Get queries received for me
+async function getQueriesForMe() {
+    const response = await fetch('/api/employee/queries/received', {
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+    });
+    return response.json();
+}
+
+// Respond to a query
+async function respondToQuery(queryId, response) {
+    const result = await fetch('/api/employee/queries/respond', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+            queryId: queryId,
+            response: response
+        })
+    });
+    return result.json();
+}
+
+// Get all employees list
+async function getAllEmployees() {
+    const response = await fetch('/api/employee/employees/list', {
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+    });
+    return response.json();
+}
+
 
 // API helper function
 async function apiCall(endpoint, options = {}) {

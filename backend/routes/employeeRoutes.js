@@ -3,6 +3,13 @@ const EmployeeController = require('../controllers/employeeController');
 const authenticateToken = require('../middleware/auth');
 
 const router = express.Router();
+// Add these routes to your existing employee routes
+
+router.post('/queries/submit', authenticateToken, EmployeeController.submitQuery);
+router.get('/queries/sent', authenticateToken, EmployeeController.getMyQueries);
+router.get('/queries/received', authenticateToken, EmployeeController.getQueriesForMe);
+router.post('/queries/respond', authenticateToken, EmployeeController.respondToQuery);
+router.get('/employees/list', authenticateToken, EmployeeController.getAllEmployees);
 
 // Public routes
 router.post('/login', EmployeeController.login);

@@ -29,7 +29,7 @@ class EmployeeController {
                     console.log('❌ Invalid password for:', email);
                     return res.status(401).json({ error: 'Invalid credentials' });
                 }
-
+                
                 // Mark attendance on login
                 EmployeeModel.markAttendance(employee.id, (attendanceErr) => {
                     if (attendanceErr) {
@@ -164,6 +164,85 @@ class EmployeeController {
             expiresIn: 24 * 60 * 60
         });
     }
+    // Add these methods to your existing EmployeeController class
+
+static submitQuery(req, res) {
+    console.log('💬 Employee submitting query:', req.user.email);
+    
+    const queryData = {
+        from_employee_id: req.user.id,
+        to_employee_id: req.body.to_employee_id,
+        subject: req.body.subject,
+        question: req.body.question
+    };
+
+    EmployeeModel.submitQuery(queryData, (err, results) => {
+        if (err) {
+            console.log('❌ Submit query error:', err);
+            return res.status(500).json({ error: 'Failed to submit query' });
+        }
+        console.log('✅ Query submitted successfully');
+        res.json({ 
+            message: 'Query submitted successfully', 
+            queryId: results.insertId 
+        });
+    });
+}
+
+static getMyQueries(req, res) {
+    console.log('📝 Getting queries sent by employee:', req.user.email);
+    
+    EmployeeModel.getMyQueries(req.user.id, (err, results) => {
+        if (err) {
+            console.log('❌ Database error:', err);
+            return res.status(500).json({ error: 'Database error' });
+        }
+        console.log('✅ Retrieved', results.length, 'sent queries');
+        res.json(results);
+    });
+}
+
+static getQueriesForMe(req, res) {
+    console.log('📨 Getting queries received by employee:', req.user.email);
+    
+    EmployeeModel.getQueriesForMe(req.user.id, (err, results) => {
+        if (err) {
+            console.log('❌ Database error:', err);
+            return res.status(500).json({ error: 'Database error' });
+        }
+        console.log('✅ Retrieved', results.length, 'received queries');
+        res.json(results);
+    });
+}
+
+static respondToQuery(req, res) {
+    console.log('💬 Employee responding to query:', req.user.email);
+    
+    const { queryId, response } = req.body;
+    
+    EmployeeModel.respondToQuery(queryId, response, (err, results) => {
+        if (err) {
+            console.log('❌ Respond to query error:', err);
+            return res.status(500).json({ error: 'Failed to respond to query' });
+        }
+        console.log('✅ Response submitted successfully');
+        res.json({ message: 'Response submitted successfully' });
+    });
+}
+
+static getAllEmployees(req, res) {
+    console.log('👥 Getting all employees except current user:', req.user.email);
+    
+    EmployeeModel.getAllEmployeesExceptMe(req.user.id, (err, results) => {
+        if (err) {
+            console.log('❌ Database error:', err);
+            return res.status(500).json({ error: 'Database error' });
+        }
+        console.log('✅ Retrieved', results.length, 'employees');
+        res.json(results);
+    });
+}
+
 }
 
 module.exports = EmployeeController;
