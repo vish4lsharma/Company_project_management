@@ -59,6 +59,19 @@ class AdminController {
             }
         });
     }
+    // Add this method to your AdminController class
+static getAllTasks(req, res) {
+    console.log('📝 Getting all tasks for user:', req.user.email);
+    
+    AdminModel.getAllTasks((err, results) => {
+        if (err) {
+            console.log('❌ Database error:', err);
+            return res.status(500).json({ error: 'Database error' });
+        }
+        console.log('✅ Retrieved', results.length, 'tasks');
+        res.json(results);
+    });
+}
 
     static getAllEmployees(req, res) {
         console.log('📋 Getting all employees for user:', req.user.email);

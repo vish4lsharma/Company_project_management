@@ -105,6 +105,17 @@ class AdminModel {
         const query = 'SELECT id FROM employees WHERE email = ? OR employee_id = ?';
         db.query(query, [email, employee_id], callback);
     }
+    // Add this method to your AdminModel class
+static getAllTasks(callback) {
+    const query = `
+        SELECT t.*, p.project_name, e.name as employee_name, e.employee_id
+        FROM tasks t 
+        JOIN projects p ON t.project_id = p.id 
+        JOIN employees e ON t.assigned_to = e.id 
+        ORDER BY t.created_at DESC
+    `;
+    db.query(query, callback);
+}
 
     // FIXED: Generate next Employee ID - Simplified query
   // Fixed generateEmployeeId method
