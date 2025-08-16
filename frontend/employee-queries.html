@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Queries - Company Management</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .queries-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .query-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ddd;
+        }
+        .tab-button {
+            background: none;
+            border: none;
+            padding: 15px 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .tab-button.active {
+            color: #007bff;
+            border-bottom-color: #007bff;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .query-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .form-group select, .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .query-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .query-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .query-status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status-answered {
+            background: #d4edda;
+            color: #155724;
+        }
+        .response-area {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h2>Employee Queries</h2>
+            <div class="nav-links">
+                <a href="employee-dashboard.html">Dashboard</a>
+                <a href="employee-queries.html" class="active">Queries</a>
+                <a href="#" onclick="logout()">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="queries-container">
+        <div class="query-tabs">
+            <button class="tab-button active" onclick="showTab('ask-query')">Ask Query</button>
+            <button class="tab-button" onclick="showTab('my-queries')">My Queries</button>
+            <button class="tab-button" onclick="showTab('received-queries')">Received Queries</button>
+        </div>
+
+        <!-- Ask Query Tab -->
+        <div id="ask-query" class="tab-content active">
+            <div class="query-form">
+                <h3>Ask a Query to Colleague</h3>
+                <form id="queryForm">
+                    <div class="form-group">
+                        <label for="toEmployee">Select Employee:</label>
+                        <select id="toEmployee" required>
+                            <option value="">Choose an employee...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="subject">Subject:</label>
+                        <input type="text" id="subject" placeholder="Enter query subject" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="question">Question:</label>
+                        <textarea id="question" rows="4" placeholder="Enter your question..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn">Submit Query</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- My Queries Tab -->
+        <div id="my-queries" class="tab-content">
+            <h3>Queries I've Sent</h3>
+            <div id="sentQueriesList">
+                <!-- Dynamic content will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Received Queries Tab -->
+        <div id="received-queries" class="tab-content">
+            <h3>Queries for Me to Answer</h3>
+            <div id="receivedQueriesList">
+                <!-- Dynamic content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab functionality
+        function showTab(tabName) {
+            // Hide all tabs
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Remove active class from all buttons
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Load content based on tab
+            if (tabName === 'my-queries') {
+                loadMyQueries();
+            } else if (tabName === 'received-queries') {
+                loadReceivedQueries();
+            }
+        }
+
+        // API Functions
+        async function apiCall(endpoint, method = 'GET', data = null) {
+            const token = localStorage.getItem('token');
+            const options = {
+                method,
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            };
+            
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+            
+            const response = await fetch(`/api/employee${endpoint}`, options);
+            return response.json();
+        }
+
+        // Load employees for dropdown
+        async function loadEmployees() {
+            try {
+                const employees = await apiCall('/employees/list');
+                const select = document.getElementById('toEmployee');
+                select.innerHTML = '<option value="">Choose an employee...</option>';
+                
+                employees.forEach(emp => {
+                    select.innerHTML += `<option value="${emp.id}">${emp.name} (${emp.employee_id}) - ${emp.position}</option>`;
+                });
+            } catch (error) {
+                console.error('Error loading employees:', error);
+            }
+        }
+
+        // Submit query form
+        document.getElementById('queryForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                to_employee_id: document.getElementById('toEmployee').value,
+                subject: document.getElementById('subject').value,
+                question: document.getElementById('question').value
+            };
+            
+            try {
+                const result = await apiCall('/queries/submit', 'POST', formData);
+                if (result.message) {
+                    alert('Query submitted successfully!');
+                    document.getElementById('queryForm').reset();
+                } else {
+                    alert('Error submitting query');
+                }
+            } catch (error) {
+                console.error('Error submitting query:', error);
+                alert('Error submitting query');
+            }
+        });
+
+        // Load queries I sent
+        async function loadMyQueries() {
+            try {
+                const queries = await apiCall('/queries/sent');
+                const container = document.getElementById('sentQueriesList');
+                
+                if (queries.length === 0) {
+                    container.innerHTML = '<p>No queries sent yet.</p>';
+                    return;
+                }
+                
+                container.innerHTML = queries.map(query => `
+                    <div class="query-card">
+                        <div class="query-header">
+                            <div>
+                                <strong>To: ${query.to_employee_name} (${query.to_employee_id})</strong>
+                                <span class="query-status status-${query.status}">${query.status.toUpperCase()}</span>
+                            </div>
+                            <small>${new Date(query.created_at).toLocaleDateString()}</small>
+                        </div>
+                        <h4>${query.subject}</h4>
+                        <p><strong>Question:</strong> ${query.question}</p>
+                        ${query.response ? `
+                            <div class="response-area">
+                                <strong>Response:</strong>
+                                <p>${query.response}</p>
+                                <small>Responded on: ${new Date(query.responded_at).toLocaleDateString()}</small>
+                            </div>
+                        ` : '<p><em>Waiting for response...</em></p>'}
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading my queries:', error);
+            }
+        }
+
+        // Load queries received for me
+        async function loadReceivedQueries() {
+            try {
+                const queries = await apiCall('/queries/received');
+                const container = document.getElementById('receivedQueriesList');
+                
+                if (queries.length === 0) {
+                    container.innerHTML = '<p>No queries received yet.</p>';
+                    return;
+                }
+                
+                container.innerHTML = queries.map(query => `
+                    <div class="query-card">
+                        <div class="query-header">
+                            <div>
+                                <strong>From: ${query.from_employee_name} (${query.from_employee_id})</strong>
+                                <span class="query-status status-${query.status}">${query.status.toUpperCase()}</span>
+                            </div>
+                            <small>${new Date(query.created_at).toLocaleDateString()}</small>
+                        </div>
+                        <h4>${query.subject}</h4>
+                        <p><strong>Question:</strong> ${query.question}</p>
+                        ${query.status === 'pending' ? `
+                            <div class="response-area">
+                                <label for="response-${query.id}">Your Response:</label>
+                                <textarea id="response-${query.id}" rows="3" placeholder="Type your response..."></textarea>
+                                <button class="btn btn-success" onclick="submitResponse(${query.id})">Submit Response</button>
+                            </div>
+                        ` : `
+                            <div class="response-area">
+                                <strong>Your Response:</strong>
+                                <p>${query.response}</p>
+                                <small>Responded on: ${new Date(query.responded_at).toLocaleDateString()}</small>
+                            </div>
+                        `}
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading received queries:', error);
+            }
+        }
+
+        // Submit response to a query
+        async function submitResponse(queryId) {
+            const responseText = document.getElementById(`response-${queryId}`).value;
+            
+            if (!responseText.trim()) {
+                alert('Please enter a response');
+                return;
+            }
+            
+            try {
+                const result = await apiCall('/queries/respond', 'POST', {
+                    queryId: queryId,
+                    response: responseText
+                });
+                
+                if (result.message) {
+                    alert('Response submitted successfully!');
+                    loadReceivedQueries(); // Reload the list
+                } else {
+                    alert('Error submitting response');
+                }
+            } catch (error) {
+                console.error('Error submitting response:', error);
+                alert('Error submitting response');
+            }
+        }
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = 'login.html?type=employee';
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            loadEmployees();
+        });
+    </script>
+</body>
+</html>
