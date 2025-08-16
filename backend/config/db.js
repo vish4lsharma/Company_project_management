@@ -12,6 +12,7 @@ if (process.env.DATABASE_URL) {
     pool.connect((err, client, release) => {
         if (err) {
             console.error('❌ PostgreSQL connection failed:', err.message);
+            console.error('Using DATABASE_URL:', process.env.DATABASE_URL ? 'Set' : 'Missing');
             return;
         }
         console.log('✅ Connected to PostgreSQL database');
