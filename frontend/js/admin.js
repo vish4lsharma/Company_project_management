@@ -82,35 +82,98 @@ async function apiCall(endpoint, options = {}) {
 }
 
 // Dashboard functions
+// Dashboard functions - FIXED VERSION
 async function loadDashboardData() {
     try {
-        const [employeesData, projectsData, reportsData, attendanceData] = await Promise.all([
+        console.log('📊 Loading dashboard data...');
+        
+        // Fetch ALL required data including tasks
+        const [employeesData, projectsData, reportsData, attendanceData, tasksData] = await Promise.all([
             apiCall('/api/admin/employees'),
             apiCall('/api/admin/projects'),
             apiCall('/api/admin/reports'),
-            apiCall('/api/admin/attendance')
+            apiCall('/api/admin/attendance'),
+            apiCall('/api/admin/tasks')  // NEW: Fetch tasks for dashboard
         ]);
         
         employees = employeesData;
         projects = projectsData;
         
+        console.log('📊 Data loaded:', {
+            employees: employees.length,
+            projects: projects.length,
+            reports: reportsData.length,
+            tasks: tasksData.length
+        });
+        
         // Update dashboard stats
         document.getElementById('totalEmployees').textContent = employees.length;
-        document.getElementById('activeProjects').textContent = 
-            projects.filter(p => p.status === 'in_progress').length;
+        
+        // Calculate active projects (status = 'in_progress')
+        const activeProjectsCount = projects.filter(p => p.status === 'in_progress').length;
+        document.getElementById('activeProjects').textContent = activeProjectsCount;
+        console.log('🚀 Active projects:', activeProjectsCount);
+        
+        // Calculate pending tasks (status = 'pending')
+        const pendingTasksCount = tasksData.filter(t => t.status === 'pending').length;
+        document.getElementById('pendingTasks').textContent = pendingTasksCount;
+        console.log('⏳ Pending tasks:', pendingTasksCount);
         
         // Calculate today's reports
         const today = new Date().toISOString().split('T')[0];
-        const todayReports = reportsData.filter(r => r.report_date === today);
-        document.getElementById('todayReports').textContent = todayReports.length;
-        
-        // This would require additional task data - simplified for now
-        document.getElementById('pendingTasks').textContent = '0';
+        const todayReportsCount = reportsData.filter(r => {
+            const reportDate = r.report_date;
+            // Handle different date formats
+            const normalizedDate = reportDate.includes('T') ? reportDate.split('T') : reportDate;
+            return normalizedDate === today;
+        }).length;
+        document.getElementById('todayReports').textContent = todayReportsCount;
+        console.log('📋 Today reports:', todayReportsCount, 'for date:', today);
         
     } catch (error) {
-        console.error('Failed to load dashboard data:', error);
+        console.error('❌ Failed to load dashboard data:', error);
+        // Set fallback values
+        document.getElementById('totalEmployees').textContent = '0';
+        document.getElementById('activeProjects').textContent = '0';
+        document.getElementById('pendingTasks').textContent = '0';
+        document.getElementById('todayReports').textContent = '0';
     }
 }
+
+// Debug function to check your actual data
+async function debugDashboardData() {
+    try {
+        const [employeesData, projectsData, reportsData, tasksData] = await Promise.all([
+            apiCall('/api/admin/employees'),
+            apiCall('/api/admin/projects'),
+            apiCall('/api/admin/reports'),
+            apiCall('/api/admin/tasks')
+        ]);
+        
+        console.log('=== DASHBOARD DEBUG ===');
+        console.log('Employees:', employeesData);
+        console.log('Projects:', projectsData);
+        console.log('Reports:', reportsData);
+        console.log('Tasks:', tasksData);
+        
+        // Check project statuses
+        console.log('Project statuses:', projectsData.map(p => ({ name: p.project_name, status: p.status })));
+        
+        // Check task statuses
+        console.log('Task statuses:', tasksData.map(t => ({ name: t.task_name, status: t.status })));
+        
+        // Check today's date and report dates
+        const today = new Date().toISOString().split('T')[0];
+        console.log('Today:', today);
+        console.log('Report dates:', reportsData.map(r => r.report_date));
+        
+    } catch (error) {
+        console.error('Debug error:', error);
+    }
+}
+
+// Call this in browser console to debug
+// debugDashboardData();
 
 // Employee functions - Enhanced with loading states and better UX
 async function loadEmployees() {
