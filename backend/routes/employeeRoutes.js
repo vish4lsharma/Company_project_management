@@ -20,6 +20,13 @@ router.get('/tasks', authenticateToken, EmployeeController.getMyTasks);
 router.post('/reports', authenticateToken, EmployeeController.submitDailyReport);
 router.put('/tasks/status', authenticateToken, EmployeeController.updateTaskStatus);
 router.get('/attendance', authenticateToken, EmployeeController.getMyAttendance);
+// Add these routes to your existing employee routes
+
+router.post('/upload-image', authenticateToken, EmployeeController.uploadImage);
+router.post('/queries/submit-with-image', authenticateToken, EmployeeController.submitQueryWithImage);
+router.post('/queries/respond-with-image', authenticateToken, EmployeeController.respondToQueryWithImage);
+router.post('/images/send', authenticateToken, EmployeeController.sendImageMessage);
+router.get('/images/messages', authenticateToken, EmployeeController.getImageMessages);
 
 // Token refresh endpoint
 router.post('/refresh-token', authenticateToken, EmployeeController.refreshToken);

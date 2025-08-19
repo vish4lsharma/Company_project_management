@@ -35,6 +35,8 @@ app.get('/health', (req, res) => {
 app.get(/(.*)/, (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
+// Add this line after other static file serving
+app.use('/uploads', express.static(path.join(__dirname, '../frontend/uploads')));
 
 // Bind to 0.0.0.0 for Render
 app.listen(PORT, '0.0.0.0', () => {

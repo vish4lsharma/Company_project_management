@@ -223,6 +223,81 @@ static getAllEmployeesExceptMe(currentEmployeeId, callback) {
             }
         });
     }
+    // Add these methods to your existing EmployeeModel class
+
+static submitQueryWithImage(queryData, callback) {
+    const query = `
+        INSERT INTO employee_queries (from_employee_id, to_employee_id, subject, question, image_url, status) 
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING id
+    `;
+    db.query(query, [
+        queryData.from_employee_id,
+        queryData.to_employee_id,
+        queryData.subject,
+        queryData.question,
+        queryData.image_url,
+        'pending'
+    ], (err, results) => {
+        if (err) return callback(err);
+        const insertResult = {
+            insertId: results.rows ? results.rows[0].id : results.insertId
+        };
+        callback(null, insertResult);
+    });
+}
+
+static respondToQueryWithImage(queryId, response, imageUrl, callback) {
+    const query = `
+        UPDATE employee_queries 
+        SET response = $1, response_image_url = $2, status = $3, responded_at = NOW()
+        WHERE id = $4
+        RETURNING id
+    `;
+    db.query(query, [response, imageUrl, 'answered', queryId], (err, results) => {
+        if (err) return callback(err);
+        const affectedRows = results.rows ? results.rows.length : results.affectedRows;
+        callback(null, { affectedRows });
+    });
+}
+
+static sendImageMessage(messageData, callback) {
+    const query = `
+        INSERT INTO employee_image_messages (sender_id, receiver_id, image_url, message) 
+        VALUES ($1, $2, $3, $4)
+        RETURNING id
+    `;
+    db.query(query, [
+        messageData.sender_id,
+        messageData.receiver_id,
+        messageData.image_url,
+        messageData.message
+    ], (err, results) => {
+        if (err) return callback(err);
+        const insertResult = {
+            insertId: results.rows ? results.rows[0].id : results.insertId
+        };
+        callback(null, insertResult);
+    });
+}
+
+static getImageMessages(employeeId, callback) {
+    const query = `
+        SELECT eim.*, 
+               e_sender.name as sender_name, e_sender.employee_id as sender_emp_id,
+               e_receiver.name as receiver_name, e_receiver.employee_id as receiver_emp_id
+        FROM employee_image_messages eim
+        LEFT JOIN employees e_sender ON eim.sender_id = e_sender.id
+        LEFT JOIN employees e_receiver ON eim.receiver_id = e_receiver.id
+        WHERE eim.sender_id = $1 OR eim.receiver_id = $1
+        ORDER BY eim.sent_at DESC
+    `;
+    db.query(query, [employeeId], (err, results) => {
+        if (err) return callback(err);
+        const rows = results.rows || results;
+        callback(null, rows);
+    });
+}
 
     static updateTaskStatus(taskId, status, callback) {
         const query = 'UPDATE tasks SET status = $1 WHERE id = $2 RETURNING id';
