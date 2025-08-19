@@ -68,7 +68,7 @@
         }
         .query-header {
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
         }
@@ -110,26 +110,59 @@
         .btn-success:hover {
             background: #1e7e34;
         }
+        
+        /* Image upload styles */
+        .image-upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+        }
+        .image-upload-area:hover {
+            border-color: #007bff;
+        }
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .message-image {
+            max-width: 300px;
+            max-height: 300px;
+            margin: 10px 0;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .query-image {
+            max-width: 300px;
+            max-height: 300px;
+            margin: 10px 0;
+            border-radius: 8px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
     <nav style="background-color: #333; color: white; padding: 1rem 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-    <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center;">
-        <h2 style="margin: 0; font-size: 1.5rem; color: white;">Employee Queries</h2>
-        <div style="display: flex; gap: 20px;">
-            <a href="dashboard-employee.html" style="color: white; text-decoration: none; padding: 8px 16px; border-radius: 4px; transition: background-color 0.3s; background-color: transparent;">Back</a>
-            <a href="#" style="color: white; text-decoration: none; padding: 8px 16px; border-radius: 4px; transition: background-color 0.3s; background-color: #555; font-weight: bold;">Queries</a>
-            <!-- <a href="#" onclick="logout()" style="color: white; text-decoration: none; padding: 8px 16px; border-radius: 4px; transition: background-color 0.3s; background-color: transparent;">Logout</a> -->
+        <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin: 0; font-size: 1.5rem; color: white;">Employee Queries</h2>
+            <div style="display: flex; gap: 20px;">
+                <a href="dashboard-employee.html" style="color: white; text-decoration: none; padding: 8px 16px; border-radius: 4px; transition: background-color 0.3s; background-color: transparent;">Back</a>
+                <a href="#" style="color: white; text-decoration: none; padding: 8px 16px; border-radius: 4px; transition: background-color 0.3s; background-color: #555; font-weight: bold;">Queries</a>
+            </div>
         </div>
-    </div>
-</nav>
-
+    </nav>
 
     <div class="queries-container">
         <div class="query-tabs">
             <button class="tab-button active" onclick="showTab('ask-query')">Ask Query</button>
             <button class="tab-button" onclick="showTab('my-queries')">My Queries</button>
             <button class="tab-button" onclick="showTab('received-queries')">Received Queries</button>
+            <button class="tab-button" onclick="showTab('image-messages')">Image Messages</button>
         </div>
 
         <!-- Ask Query Tab -->
@@ -151,6 +184,14 @@
                         <label for="question">Question:</label>
                         <textarea id="question" rows="4" placeholder="Enter your question..." required></textarea>
                     </div>
+                    <div class="form-group">
+                        <label>Attach Image (Optional):</label>
+                        <div class="image-upload-area" onclick="document.getElementById('queryImageInput').click()">
+                            <p>Click to upload an image</p>
+                            <input type="file" id="queryImageInput" accept="image/*" style="display:none;">
+                        </div>
+                        <img id="queryImagePreview" class="image-preview" style="display:none;">
+                    </div>
                     <button type="submit" class="btn">Submit Query</button>
                 </form>
             </div>
@@ -168,6 +209,39 @@
         <div id="received-queries" class="tab-content">
             <h3>Queries for Me to Answer</h3>
             <div id="receivedQueriesList">
+                <!-- Dynamic content will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Image Messages Tab -->
+        <div id="image-messages" class="tab-content">
+            <h3>Send Image Message</h3>
+            <div class="query-form">
+                <form id="imageMessageForm">
+                    <div class="form-group">
+                        <label for="imageReceiver">Select Employee:</label>
+                        <select id="imageReceiver" required>
+                            <option value="">Choose an employee...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="imageMessage">Message (Optional):</label>
+                        <textarea id="imageMessage" rows="2" placeholder="Add a message with your image..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Select Image:</label>
+                        <div class="image-upload-area" onclick="document.getElementById('messageImageInput').click()">
+                            <p>Click to upload an image</p>
+                            <input type="file" id="messageImageInput" accept="image/*" style="display:none;" required>
+                        </div>
+                        <img id="messageImagePreview" class="image-preview" style="display:none;">
+                    </div>
+                    <button type="submit" class="btn">Send Image</button>
+                </form>
+            </div>
+            
+            <h3>Image Messages History</h3>
+            <div id="imageMessagesList">
                 <!-- Dynamic content will be loaded here -->
             </div>
         </div>
@@ -193,6 +267,8 @@
                 loadMyQueries();
             } else if (tabName === 'received-queries') {
                 loadReceivedQueries();
+            } else if (tabName === 'image-messages') {
+                loadImageMessages();
             }
         }
 
@@ -215,42 +291,147 @@
             return response.json();
         }
 
+        // Image upload functions
+        document.getElementById('queryImageInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('queryImagePreview');
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById('messageImageInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('messageImagePreview');
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Upload image function
+        async function uploadImage(fileInput) {
+            const file = fileInput.files[0];
+            if (!file) return null;
+            
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            try {
+                const response = await fetch('/api/employee/upload-image', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: formData
+                });
+                
+                const result = await response.json();
+                return result.imageUrl;
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                return null;
+            }
+        }
+
         // Load employees for dropdown
         async function loadEmployees() {
             try {
                 const employees = await apiCall('/employees/list');
                 const select = document.getElementById('toEmployee');
-                select.innerHTML = '<option value="">Choose an employee...</option>';
+                const imageSelect = document.getElementById('imageReceiver');
                 
-                employees.forEach(emp => {
-                    select.innerHTML += `<option value="${emp.id}">${emp.name} (${emp.employee_id}) - ${emp.position}</option>`;
-                });
+                const options = '<option value="">Choose an employee...</option>' + 
+                    employees.map(emp => 
+                        `<option value="${emp.id}">${emp.name} (${emp.employee_id}) - ${emp.position}</option>`
+                    ).join('');
+                
+                select.innerHTML = options;
+                imageSelect.innerHTML = options;
             } catch (error) {
                 console.error('Error loading employees:', error);
             }
         }
 
-        // Submit query form
+        // Submit query form with image support
         document.getElementById('queryForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            let imageUrl = null;
+            const imageInput = document.getElementById('queryImageInput');
+            
+            if (imageInput.files[0]) {
+                imageUrl = await uploadImage(imageInput);
+                if (!imageUrl) {
+                    alert('Error uploading image');
+                    return;
+                }
+            }
             
             const formData = {
                 to_employee_id: document.getElementById('toEmployee').value,
                 subject: document.getElementById('subject').value,
-                question: document.getElementById('question').value
+                question: document.getElementById('question').value,
+                image_url: imageUrl
             };
             
             try {
-                const result = await apiCall('/queries/submit', 'POST', formData);
+                const endpoint = imageUrl ? '/queries/submit-with-image' : '/queries/submit';
+                const result = await apiCall(endpoint, 'POST', formData);
+                
                 if (result.message) {
                     alert('Query submitted successfully!');
                     document.getElementById('queryForm').reset();
+                    document.getElementById('queryImagePreview').style.display = 'none';
                 } else {
                     alert('Error submitting query');
                 }
             } catch (error) {
                 console.error('Error submitting query:', error);
                 alert('Error submitting query');
+            }
+        });
+
+        // Image message form submission
+        document.getElementById('imageMessageForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const imageInput = document.getElementById('messageImageInput');
+            const imageUrl = await uploadImage(imageInput);
+            
+            if (!imageUrl) {
+                alert('Error uploading image');
+                return;
+            }
+            
+            const formData = {
+                receiver_id: document.getElementById('imageReceiver').value,
+                message: document.getElementById('imageMessage').value,
+                image_url: imageUrl
+            };
+            
+            try {
+                const result = await apiCall('/images/send', 'POST', formData);
+                if (result.message) {
+                    alert('Image message sent successfully!');
+                    document.getElementById('imageMessageForm').reset();
+                    document.getElementById('messageImagePreview').style.display = 'none';
+                    loadImageMessages();
+                } else {
+                    alert('Error sending image message');
+                }
+            } catch (error) {
+                console.error('Error sending image message:', error);
+                alert('Error sending image message');
             }
         });
 
@@ -276,10 +457,12 @@
                         </div>
                         <h4>${query.subject}</h4>
                         <p><strong>Question:</strong> ${query.question}</p>
+                        ${query.image_url ? `<img src="${query.image_url}" class="query-image" onclick="openImageModal('${query.image_url}')">` : ''}
                         ${query.response ? `
                             <div class="response-area">
                                 <strong>Response:</strong>
                                 <p>${query.response}</p>
+                                ${query.response_image_url ? `<img src="${query.response_image_url}" class="query-image" onclick="openImageModal('${query.response_image_url}')">` : ''}
                                 <small>Responded on: ${new Date(query.responded_at).toLocaleDateString()}</small>
                             </div>
                         ` : '<p><em>Waiting for response...</em></p>'}
@@ -312,27 +495,58 @@
                         </div>
                         <h4>${query.subject}</h4>
                         <p><strong>Question:</strong> ${query.question}</p>
+                        ${query.image_url ? `<img src="${query.image_url}" class="query-image" onclick="openImageModal('${query.image_url}')">` : ''}
                         ${query.status === 'pending' ? `
                             <div class="response-area">
                                 <label for="response-${query.id}">Your Response:</label>
                                 <textarea id="response-${query.id}" rows="3" placeholder="Type your response..."></textarea>
+                                <div class="form-group">
+                                    <label>Attach Image (Optional):</label>
+                                    <div class="image-upload-area" onclick="document.getElementById('responseImage-${query.id}').click()">
+                                        <p>Click to upload an image</p>
+                                        <input type="file" id="responseImage-${query.id}" accept="image/*" style="display:none;">
+                                    </div>
+                                    <img id="responseImagePreview-${query.id}" class="image-preview" style="display:none;">
+                                </div>
                                 <button class="btn btn-success" onclick="submitResponse(${query.id})">Submit Response</button>
                             </div>
                         ` : `
                             <div class="response-area">
                                 <strong>Your Response:</strong>
                                 <p>${query.response}</p>
+                                ${query.response_image_url ? `<img src="${query.response_image_url}" class="query-image" onclick="openImageModal('${query.response_image_url}')">` : ''}
                                 <small>Responded on: ${new Date(query.responded_at).toLocaleDateString()}</small>
                             </div>
                         `}
                     </div>
                 `).join('');
+
+                // Add event listeners for response image uploads
+                queries.forEach(query => {
+                    if (query.status === 'pending') {
+                        const input = document.getElementById(`responseImage-${query.id}`);
+                        if (input) {
+                            input.addEventListener('change', function(e) {
+                                const file = e.target.files[0];
+                                if (file) {
+                                    const reader = new FileReader();
+                                    reader.onload = function(e) {
+                                        const preview = document.getElementById(`responseImagePreview-${query.id}`);
+                                        preview.src = e.target.result;
+                                        preview.style.display = 'block';
+                                    };
+                                    reader.readAsDataURL(file);
+                                }
+                            });
+                        }
+                    }
+                });
             } catch (error) {
                 console.error('Error loading received queries:', error);
             }
         }
 
-        // Submit response to a query
+        // Submit response to a query with image support
         async function submitResponse(queryId) {
             const responseText = document.getElementById(`response-${queryId}`).value;
             
@@ -340,11 +554,24 @@
                 alert('Please enter a response');
                 return;
             }
+
+            let imageUrl = null;
+            const imageInput = document.getElementById(`responseImage-${queryId}`);
+            
+            if (imageInput && imageInput.files[0]) {
+                imageUrl = await uploadImage(imageInput);
+                if (!imageUrl) {
+                    alert('Error uploading image');
+                    return;
+                }
+            }
             
             try {
-                const result = await apiCall('/queries/respond', 'POST', {
+                const endpoint = imageUrl ? '/queries/respond-with-image' : '/queries/respond';
+                const result = await apiCall(endpoint, 'POST', {
                     queryId: queryId,
-                    response: responseText
+                    response: responseText,
+                    image_url: imageUrl
                 });
                 
                 if (result.message) {
@@ -357,6 +584,45 @@
                 console.error('Error submitting response:', error);
                 alert('Error submitting response');
             }
+        }
+
+        // Load image messages
+        async function loadImageMessages() {
+            try {
+                const messages = await apiCall('/images/messages');
+                const container = document.getElementById('imageMessagesList');
+                
+                if (messages.length === 0) {
+                    container.innerHTML = '<p>No image messages yet.</p>';
+                    return;
+                }
+                
+                container.innerHTML = messages.map(msg => `
+                    <div class="query-card">
+                        <div class="query-header">
+                            <div>
+                                <strong>${msg.sender_id == getCurrentUserId() ? 'To: ' + msg.receiver_name : 'From: ' + msg.sender_name}</strong>
+                            </div>
+                            <small>${new Date(msg.sent_at).toLocaleDateString()}</small>
+                        </div>
+                        ${msg.message ? `<p><strong>Message:</strong> ${msg.message}</p>` : ''}
+                        <img src="${msg.image_url}" class="message-image" onclick="openImageModal('${msg.image_url}')">
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading image messages:', error);
+            }
+        }
+
+        // Helper function to get current user ID
+        function getCurrentUserId() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            return user ? user.id : null;
+        }
+
+        // Open image in modal
+        function openImageModal(imageUrl) {
+            window.open(imageUrl, '_blank');
         }
 
         // Logout function
